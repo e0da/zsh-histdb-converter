@@ -1,52 +1,51 @@
-# zsh-histdb-converter 🚀
+# zsh-histdb-converter
 
-**Convert your entire zsh history to Atuin in minutes!**
+**Convert zsh history to Atuin using the zsh-histdb import method**
 
-> **⚡ One-liner:** `uvx --from git+https://github.com/e0da/zsh-histdb-converter zsh-histdb-converter --import-to-atuin`
+> **⚡ Quick start:** `uvx --from git+https://github.com/e0da/zsh-histdb-converter zsh-histdb-converter --import-to-atuin`
 
-Stop settling for partial history imports. This tool solves the mysterious Atuin import problem and gets your **complete** shell history searchable.
+This tool addresses import limitations with Atuin's standard zsh importers by using Atuin's [`zsh-histdb` import method](https://docs.atuin.sh/reference/import/#zsh_histdb), which is more robust for large history files and complex command structures.
 
-## 🤔 The Problem
+## The Issue
 
-You have thousands of commands in your history, but Atuin barely imports any:
+Atuin's standard import commands (`atuin import auto` and `atuin import zsh`) can have limitations with certain history files:
 
 ```bash
 $ wc -l ~/.histfile
-   51852 /Users/you/.histfile     # 51K+ commands
+   51852 /Users/you/.histfile     # Large history file
 
 $ atuin import auto && atuin import zsh
 $ atuin stats
-Total commands:   15              # Only 15?! 😤
+Total commands:   15              # Limited import results
 ```
 
-**Why?** Atuin's built-in importers fail on:
+**Common import limitations:**
 
 - Large history files
 - Malformed multiline commands
 - Complex command structures
 - Certain formatting edge cases
 
-## ✅ The Solution
+## The Solution
 
-This tool uses Atuin's **zsh-histdb import method** which is much more robust:
+This tool converts your zsh history to the [zsh-histdb format](https://github.com/larkery/zsh-histdb) that Atuin can import via `atuin import zsh-hist-db`. This import method is more robust and handles edge cases better than the standard zsh importer.
 
 ```bash
 $ zsh-histdb-converter --import-to-atuin
+Converting all entries from /Users/you/.histfile
 ✅ Conversion completed successfully!
 ✅ Successfully imported to Atuin!
 
 $ atuin stats
-Total commands:   49271  🚀       # ALL commands imported!
-Unique commands:  25175  🔥
+Total commands:   49271          # Complete import
+Unique commands:  25175
 ```
 
-**That's a 3,284x improvement!** From 15 to 49,271 commands.
-
-## 🚀 Installation & Usage
+## Installation & Usage
 
 ### Option 1: uvx (Recommended)
 
-No installation needed - runs directly from GitHub:
+Run directly from GitHub without installation:
 
 ```bash
 uvx --from git+https://github.com/e0da/zsh-histdb-converter zsh-histdb-converter --import-to-atuin
@@ -65,12 +64,28 @@ zsh-histdb-converter --import-to-atuin
 
 ### Option 3: Docker 🐳
 
-Perfect for isolated environments or when you don't want to install Python tools:
+For isolated environments or when you prefer not to install Python tools:
 
 #### Quick Start with Docker
 
+**One-liner (builds and runs directly from GitHub):**
+
 ```bash
-# Build the image
+# Create output directory and run converter in one command
+mkdir -p ./atuin-import && \
+docker run --rm \
+  -v ~/.histfile:/home/app/.histfile:ro \
+  -v ./atuin-import:/home/app/data \
+  $(docker build -q https://github.com/e0da/zsh-histdb-converter.git)
+
+# Import the generated database to Atuin
+HISTDB_FILE=./atuin-import/zsh-histdb.db atuin import zsh-hist-db
+```
+
+**Or step-by-step:**
+
+```bash
+# Build the image from GitHub
 docker build -t zsh-histdb-converter https://github.com/e0da/zsh-histdb-converter.git
 
 # Create output directory
@@ -91,6 +106,14 @@ HISTDB_FILE=./atuin-import/zsh-histdb.db atuin import zsh-hist-db
 **Convert recent 1000 commands:**
 
 ```bash
+# One-liner (builds from GitHub)
+mkdir -p ./atuin-import && \
+docker run --rm \
+  -v ~/.histfile:/home/app/.histfile:ro \
+  -v ./atuin-import:/home/app/data \
+  $(docker build -q https://github.com/e0da/zsh-histdb-converter.git) -n 1000
+
+# Or with pre-built image
 docker run --rm \
   -v ~/.histfile:/home/app/.histfile:ro \
   -v ./atuin-import:/home/app/data \
@@ -100,6 +123,14 @@ docker run --rm \
 **Custom history file location:**
 
 ```bash
+# One-liner (builds from GitHub)
+mkdir -p ./atuin-import && \
+docker run --rm \
+  -v ~/.zsh_history:/home/app/.histfile:ro \
+  -v ./atuin-import:/home/app/data \
+  $(docker build -q https://github.com/e0da/zsh-histdb-converter.git)
+
+# Or with pre-built image
 docker run --rm \
   -v ~/.zsh_history:/home/app/.histfile:ro \
   -v ./atuin-import:/home/app/data \
@@ -109,6 +140,14 @@ docker run --rm \
 **Custom output filename:**
 
 ```bash
+# One-liner (builds from GitHub)
+mkdir -p ./atuin-import && \
+docker run --rm \
+  -v ~/.histfile:/home/app/.histfile:ro \
+  -v ./atuin-import:/home/app/data \
+  $(docker build -q https://github.com/e0da/zsh-histdb-converter.git) -o my-history.db
+
+# Or with pre-built image
 docker run --rm \
   -v ~/.histfile:/home/app/.histfile:ro \
   -v ./atuin-import:/home/app/data \
@@ -121,13 +160,13 @@ docker run --rm \
 docker run --rm zsh-histdb-converter --help
 ```
 
-#### Docker Notes
+#### Docker Features
 
-- 🔒 **Secure**: Your history file is mounted read-only
-- 📦 **Isolated**: No Python dependencies on your system
-- 🏗️ **Alpine-based**: Small ~150MB image
-- 📁 **Output**: Database saved to mounted `/home/app/data` directory
-- ⚠️ **Manual Import**: Docker version creates database only - you import it manually with `atuin import zsh-hist-db`
+- **Secure**: History file mounted read-only
+- **Isolated**: No Python dependencies on your system
+- **Alpine-based**: Compact ~150MB image
+- **Flexible**: Database saved to mounted `/home/app/data` directory
+- **Manual Import**: Creates database file - import manually with `atuin import zsh-hist-db`
 
 ### Option 4: Clone & Run
 
@@ -137,7 +176,7 @@ cd zsh-histdb-converter
 uv run zsh-histdb-converter --import-to-atuin
 ```
 
-## 🔧 Command Options
+## Command Options
 
 ```bash
 # Convert all history (default)
@@ -156,68 +195,44 @@ zsh-histdb-converter -o my-history.db
 zsh-histdb-converter --help
 ```
 
-## 🛠️ How It Works
+## How It Works
 
 1. **Parses** your zsh history file (`~/.histfile` by default)
-2. **Converts** entries to zsh-histdb SQLite format with proper schema
-3. **Imports** database into Atuin using `atuin import zsh-hist-db`
+2. **Converts** entries to [zsh-histdb SQLite format](https://github.com/larkery/zsh-histdb) with proper schema
+3. **Imports** database into Atuin using [`atuin import zsh-hist-db`](https://docs.atuin.sh/reference/import/#zsh_histdb)
 
-Handles all the edge cases:
+The tool handles common edge cases:
 
-- ✅ Malformed multiline commands
-- ✅ Large files (50K+ commands tested)
-- ✅ Duplicate deduplication
-- ✅ Proper timestamp/duration parsing
+- Malformed multiline commands
+- Large files (tested with 50K+ commands)
+- Duplicate deduplication
+- Proper timestamp/duration parsing
 
-## 🚀 Atuin Setup (New Users)
+## Prerequisites
 
-New to Atuin? Here's the complete setup:
-
-### 1. Install Atuin
+This tool assumes you have Atuin installed and configured. If not:
 
 ```bash
-# macOS
-brew install atuin
+# Install Atuin
+brew install atuin  # macOS
+# or: curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
 
-# Linux
-curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
-```
-
-### 2. Configure Shell
-
-Add to your `~/.zshrc`:
-
-```bash
+# Configure shell (add to ~/.zshrc)
 eval "$(atuin init zsh)"
-```
 
-### 3. Register Account
-
-```bash
+# Register account
 atuin register -u yourusername -e your@email.com
 ```
 
-### 4. Import History
+Then use this tool to import your history:
 
 ```bash
 uvx --from git+https://github.com/e0da/zsh-histdb-converter zsh-histdb-converter --import-to-atuin
 ```
 
-### 5. Sync (Optional)
+## Example Results
 
-```bash
-atuin sync
-```
-
-### Key Bindings
-
-- **Ctrl+R** - Smart history search (replaces default)
-- **Ctrl+↑** - Search by command prefix
-- **Esc** then **Ctrl+R** - Browse full history
-
-## 📊 Real Results
-
-**Before: Standard Atuin Import**
+**Before conversion:**
 
 ```bash
 $ wc -l ~/.histfile
@@ -225,11 +240,11 @@ $ wc -l ~/.histfile
 
 $ atuin import auto && atuin import zsh
 $ atuin stats
-Total commands:   15             # 😡 Basically nothing
+Total commands:   15
 Unique commands:  12
 ```
 
-**After: zsh-histdb-converter**
+**After conversion:**
 
 ```bash
 $ zsh-histdb-converter --import-to-atuin
@@ -238,37 +253,51 @@ Converting all entries from /Users/you/.histfile
 ✅ Successfully imported to Atuin!
 
 $ atuin stats
-Total commands:   49271  🚀      # Complete history!
-Unique commands:  25175  🔥
-[▮▮▮▮▮▮▮▮▮▮] 9959 g            # Top commands
+Total commands:   49271          # Complete history imported
+Unique commands:  25175
+[▮▮▮▮▮▮▮▮▮▮] 9959 g            # Command usage patterns
 [▮▮▮▮▮     ] 5381 cd
 [▮▮        ] 2495 grep
 ```
 
-## 🐳 Docker Deep Dive
+## Docker Detailed Usage
 
 ### Why Use Docker?
 
-- **🔒 Security**: Your history file is mounted read-only
-- **🧹 Clean**: No Python dependencies cluttering your system
-- **🏗️ Consistent**: Same environment regardless of your OS
-- **📦 Portable**: Works anywhere Docker runs
+- **Security**: History file mounted read-only
+- **Clean Environment**: No Python dependencies on your system
+- **Consistency**: Same environment across different systems
+- **Portability**: Works anywhere Docker runs
 
 ### Docker Workflow
 
-1. **Build** (or pull when available):
+**Option A: One-liner (builds directly from GitHub):**
+
+```bash
+# Build and run directly from GitHub
+mkdir -p ~/atuin-import && \
+docker run --rm \
+  -v ~/.histfile:/home/app/.histfile:ro \
+  -v ~/atuin-import:/home/app/data \
+  $(docker build -q https://github.com/e0da/zsh-histdb-converter.git) && \
+HISTDB_FILE=~/atuin-import/zsh-histdb.db atuin import zsh-hist-db
+```
+
+**Option B: Step-by-step:**
+
+1. **Build the image:**
 
    ```bash
    docker build -t zsh-histdb-converter https://github.com/e0da/zsh-histdb-converter.git
    ```
 
-2. **Prepare output directory**:
+2. **Prepare output directory:**
 
    ```bash
    mkdir -p ~/atuin-import
    ```
 
-3. **Convert history**:
+3. **Convert history:**
 
    ```bash
    docker run --rm \
@@ -277,7 +306,7 @@ Unique commands:  25175  🔥
      zsh-histdb-converter
    ```
 
-4. **Import to Atuin**:
+4. **Import to Atuin:**
    ```bash
    HISTDB_FILE=~/atuin-import/zsh-histdb.db atuin import zsh-hist-db
    ```
@@ -306,19 +335,9 @@ mkdir -p ./output
 chmod 755 ./output
 ```
 
-**Want to see what's happening?**
+## Development
 
-```bash
-# Run with verbose output
-docker run --rm \
-  -v ~/.histfile:/home/app/.histfile:ro \
-  -v ./output:/home/app/data \
-  zsh-histdb-converter --help
-```
-
-## 🧪 Development
-
-Built with modern Python practices and comprehensive testing:
+Built with modern Python practices:
 
 ```bash
 git clone https://github.com/e0da/zsh-histdb-converter
@@ -339,30 +358,32 @@ docker build -t zsh-histdb-converter .
 
 ### Architecture
 
-- **TDD Approach**: Built with test-driven development
+- **Test-Driven Development**: Comprehensive test coverage
 - **Modular Design**: Separate parser, database, converter, and CLI modules
 - **Error Handling**: Graceful handling of malformed entries
 - **Modern Python**: Type hints, dataclasses, pathlib
 
-## 🤝 Contributing
+## Documentation
 
-This tool solves a real problem that affects many Atuin users. Contributions welcome!
+- [Atuin Import Reference](https://docs.atuin.sh/reference/import/)
+- [zsh-histdb Project](https://github.com/larkery/zsh-histdb) (original SQLite history format)
+- [Atuin Documentation](https://docs.atuin.sh/)
 
-- 🐛 **Bug Reports**: Found an edge case? Open an issue
-- 💡 **Feature Ideas**: Have suggestions? Let's discuss
-- 🔧 **Code**: PRs welcome - just run the tests first
-- 📖 **Documentation**: Help make the docs even better
+## Contributing
 
-The Atuin team could totally incorporate this functionality - that would be amazing and very welcome!
+This tool addresses a common issue that affects many Atuin users. Contributions are welcome:
 
-## 📝 License
+- **Bug Reports**: Found an edge case? Open an issue
+- **Feature Ideas**: Have suggestions? Let's discuss
+- **Code**: PRs welcome - please run tests first
+- **Documentation**: Help improve the docs
+
+## License
 
 MIT License - Use freely, modify, distribute, contribute back if helpful!
 
 ---
 
-**Made with ❤️ for shell power users**
+**Made for shell power users**
 
-_Stop settling for partial history imports. Get your complete shell history in Atuin today!_
-
-🌟 **Star the repo if this helped you!** It helps others discover the solution.
+_Reliable zsh history import for Atuin using the zsh-histdb method._
