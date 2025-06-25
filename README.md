@@ -83,7 +83,20 @@ pipx install zsh-histdb-converter
 zsh-histdb-converter --import-to-atuin
 ```
 
-**Option 3: Clone and run with uv**
+**Option 3: Use Docker (Isolated Environment)**
+
+```bash
+# Build the Docker image
+docker build -t zsh-histdb-converter https://github.com/e0da/zsh-histdb-converter.git
+
+# Convert your history (mount your history file and output directory)
+docker run --rm \
+  -v ~/.histfile:/home/app/.histfile:ro \
+  -v $(pwd)/output:/home/app/data \
+  zsh-histdb-converter --import-to-atuin
+```
+
+**Option 4: Clone and run with uv**
 
 ```bash
 git clone https://github.com/e0da/zsh-histdb-converter
@@ -143,6 +156,22 @@ zsh-histdb-converter ~/.zsh_history --import-to-atuin
 
 # See all options
 zsh-histdb-converter --help
+```
+
+### Docker Usage
+
+```bash
+# Show help
+docker run --rm zsh-histdb-converter
+
+# Convert with custom options
+docker run --rm \
+  -v ~/.histfile:/home/app/.histfile:ro \
+  -v $(pwd)/output:/home/app/data \
+  zsh-histdb-converter -n 1000 -o my-history.db
+
+# Note: Docker version creates database only (no auto-import)
+# Import manually: HISTDB_FILE=output/my-history.db atuin import zsh-hist-db
 ```
 
 ## 🛠️ How It Works
