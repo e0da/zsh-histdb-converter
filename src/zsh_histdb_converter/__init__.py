@@ -1,0 +1,1 @@
+"""zsh-histdb-converter package."""
